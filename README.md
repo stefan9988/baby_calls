@@ -70,3 +70,23 @@ If, for example, files up to 5e.json already exist, the next run will start nami
 This ensures that file numbering continues automatically and no existing files are overwritten.
 
 ---
+### 3) Generate transcriptions (conversations)
+
+Turns each file’s summary text into a structured transcription and appends it back into the same file.
+
+```bash
+python generate_transcription.py
+```
+
+**What it does**
+
+* Loads items via get_data(data_dir=OUTPUT_DIR, file_pattern=FILE_PATTERN).
+
+* Skips any file that already contains a "transcription" field (idempotent).
+
+* Extracts the summary text from item["data"]["summary"]["text"] (falls back to "" if missing).
+
+* Calls the LLM that creates transcripts based on the summary
+
+* Builds the final document and writes it back to the same file path
+
