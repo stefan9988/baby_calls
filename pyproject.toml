@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "baby-calls"
+version = "0.1.0"
+description = ""
+authors = ["stefan dragicevic <stefand998@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+openai = "^2.4.0"
+python-dotenv = "^1.1.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
