@@ -16,7 +16,7 @@ load_dotenv(override=True)
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 DATA_DIR = "UNS dataset/json_english_v2"
-AUGMENTED_KEYWORDS_PATH = "UNS dataset/json_english_aug/keywords.json"
+KEYWORDS_PATH = "UNS dataset/json_english_aug/keywords.json"
 FILE_PATTERN = "*e.json"
 NUMBER_OF_SAMPLES = 20
 RANDOM_SEED = 42
@@ -28,7 +28,7 @@ client = ChatGPTClient(api_key=OPENAI_API_KEY, model=KEYWORD_GENERATOR_LLM_MODEL
 if __name__ == "__main__":
     example_data = get_data(DATA_DIR, FILE_PATTERN)
     sampled_data = random.sample(example_data, min(NUMBER_OF_SAMPLES, len(example_data)))
-    keyword_examples = [sample["summary"]["key_words"][0] for sample in sampled_data]
+    keyword_examples = [sample['data']["summary"]["key_words"][0] for sample in sampled_data]
     
     reply = client.conv(
         user_message=f"Generate {NUMBER_OF_SAMPLES} keyword phrases based on the following examples:\n"
@@ -40,7 +40,7 @@ if __name__ == "__main__":
     )
     
     json_response = json.loads(reply)
-    os.makedirs(os.path.dirname(AUGMENTED_KEYWORDS_PATH), exist_ok=True)
-    with open(AUGMENTED_KEYWORDS_PATH, "w", encoding="utf-8") as f:
+    os.makedirs(os.path.dirname(KEYWORDS_PATH), exist_ok=True)
+    with open(KEYWORDS_PATH, "w", encoding="utf-8") as f:
         json.dump(json_response, f, indent=2, ensure_ascii=False)
-    print(f"Saved {NUMBER_OF_SAMPLES} keyword phrases to {AUGMENTED_KEYWORDS_PATH}")
+    print(f"Saved {NUMBER_OF_SAMPLES} keyword phrases to {KEYWORDS_PATH}")

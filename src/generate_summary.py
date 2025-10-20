@@ -15,20 +15,20 @@ load_dotenv(override=True)
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-AUGMENTED_KEYWORDS_PATH = "UNS dataset/json_english_aug/keywords.json"
-OUTPUT_DIR = "UNS dataset/json_english_aug"
+KEYWORDS_PATH = "UNS dataset/json_english_aug/keywords.json"
+SUMMARIES_OUTPUT_DIR = "UNS dataset/json_english_aug"
 BATCH_SIZE = 10
 NUMBER_OF_SUMMARIES_PER_KEYWORD = 2
 
 client = ChatGPTClient(api_key=OPENAI_API_KEY, model=SUMMARY_GENERATOR_LLM_MODEL)
 
 if __name__ == "__main__":
-    if os.path.exists(AUGMENTED_KEYWORDS_PATH):
-        with open(AUGMENTED_KEYWORDS_PATH, "r", encoding="utf-8") as f:
+    if os.path.exists(KEYWORDS_PATH):
+        with open(KEYWORDS_PATH, "r", encoding="utf-8") as f:
             keywords = json.load(f)
         print(f"✅ Loaded {len(keywords['keywords'])} keywords")
     else:
-        print("⚠️ File not found:", AUGMENTED_KEYWORDS_PATH)
+        print("⚠️ File not found:", KEYWORDS_PATH)
 
     batch = [
         keywords["keywords"][i : i + BATCH_SIZE]
@@ -53,4 +53,4 @@ if __name__ == "__main__":
         batch_summaries = json_response.get("summaries", [])
         summaries.extend(batch_summaries)
 
-    save_summaries(summaries=summaries, output_dir=OUTPUT_DIR, suffix="e.json")
+    save_summaries(summaries=summaries, output_dir=SUMMARIES_OUTPUT_DIR, suffix="e.json")

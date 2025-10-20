@@ -4,29 +4,27 @@ import time
 from pathlib import Path
 
 def get_data(data_dir, file_pattern):
-    # Define the folder path
     folder_path = Path(data_dir)
 
-    # Make sure the folder exists
     if not folder_path.exists():
         raise FileNotFoundError(f"Folder not found: {folder_path}")
 
-    # Collect all files matching the pattern
     json_files = sorted(folder_path.glob(file_pattern))
-
-    # Read all JSON files
     all_data = []
 
     for file_path in json_files:
-        with open(file_path, "r", encoding="utf-8") as f:
-            try:
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
-                all_data.append(data)
-            except json.JSONDecodeError as e:
-                print(f"Error decoding {file_path}: {e}")
+                # Return both the data and the file path
+                all_data.append({
+                    "file_path": str(file_path),
+                    "data": data
+                })
+        except json.JSONDecodeError as e:
+            print(f"❌ Error decoding {file_path}: {e}")
 
-    print(f"Loaded {len(all_data)} files successfully.")
-
+    print(f"✅ Loaded {len(all_data)} files successfully.")
     return all_data
 
 
