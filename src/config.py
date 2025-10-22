@@ -1,6 +1,8 @@
-OUTPUT_DIR = "UNS dataset/json_english_aug"
-KEYWORDS_PATH = "UNS dataset/json_english_aug/keywords.json"
+OUTPUT_DIR = "UNS dataset/json_english_openai_4o"
+KEYWORDS_PATH = OUTPUT_DIR + "/keywords.json"
+METADATA_PATH = OUTPUT_DIR + "/metadata.json"
 
+CLIENT_TYPE = "openai"
 KEYWORD_GENERATOR_LLM_MODEL = "gpt-4o"
 KEYWORD_GENERATOR_TEMPERATURE = 0.9
 KEYWORD_GENERATOR_MAX_TOKENS = 1000

@@ -57,3 +57,31 @@ def save_summaries(summaries, output_dir, suffix="e.json"):
 
     print(f"\nTotal {len(summaries)} summaries saved at {output_dir}.")
 
+def create_metadata_file(config_module, filepath):
+    """
+    Create a metadata.json file with all variables from config.py.
+    If the file already exists, skip creating it but continue execution.
+    """
+    # If file already exists, skip creation
+    if os.path.exists(filepath):
+        print(f"⚠️ Metadata file already exists at {filepath}. Skipping creation.")
+        return
+
+    # Create folder if it doesn't exist
+    os.makedirs(os.path.dirname(filepath), exist_ok=True)
+
+    # Collect all non-dunder, non-callable attributes from config.py
+    config_dict = {
+        key: getattr(config_module, key)
+        for key in dir(config_module)
+        if not key.startswith("__") and not callable(getattr(config_module, key))
+    }
+
+    # Write metadata to file
+    with open(filepath, "w", encoding="utf-8") as f:
+        json.dump(config_dict, f, indent=2, ensure_ascii=False)
+
+    print(f"✅ Metadata file created at {filepath}")
+
+        
+

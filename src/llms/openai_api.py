@@ -1,24 +1,14 @@
 from openai import OpenAI
+from .llm_interface import LLMInterface
 
-class ChatGPTClient:
+
+class ChatGPTClient(LLMInterface):
     """
-    A simple wrapper around OpenAI's Chat Completions API.
-
-    Example:
-        client = ChatGPTClient(api_key="YOUR_API_KEY")
-        response = client.ask(
-            user_message="Write a haiku about the sea.",
-            system_message="You are a poetic assistant.",
-            temperature=0.8,
-        )
-        print(response)
+    Implementation of LLMInterface for OpenAI's ChatGPT models.
     """
 
-    def __init__(self, api_key: str = None, model: str = "gpt-4o"):
-        self.api_key = api_key
-        if not self.api_key:
-            raise ValueError("API key not provided.")
-        self.model = model
+    def __init__(self, api_key: str, model: str = "gpt-4o"):
+        super().__init__(api_key, model)
         self.client = OpenAI(api_key=self.api_key)
 
     def conv(
