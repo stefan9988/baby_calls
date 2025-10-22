@@ -1,3 +1,6 @@
+OUTPUT_DIR = "UNS dataset/json_english_aug"
+KEYWORDS_PATH = "UNS dataset/json_english_aug/keywords.json"
+
 KEYWORD_GENERATOR_LLM_MODEL = "gpt-4o"
 KEYWORD_GENERATOR_TEMPERATURE = 0.9
 KEYWORD_GENERATOR_MAX_TOKENS = 1000

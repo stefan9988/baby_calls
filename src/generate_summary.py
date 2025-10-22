@@ -1,6 +1,8 @@
 from dataset_operations import save_summaries
 from openai_api import ChatGPTClient
 from config import (
+    KEYWORDS_PATH,
+    OUTPUT_DIR,
     SUMMARY_GENERATOR_LLM_MODEL,
     SUMMARY_GENERATOR_SYSTEM_PROMPT,
     SUMMARY_GENERATOR_TEMPERATURE,
@@ -15,8 +17,6 @@ load_dotenv(override=True)
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-KEYWORDS_PATH = "UNS dataset/json_english_aug/keywords.json"
-SUMMARIES_OUTPUT_DIR = "UNS dataset/json_english_aug"
 BATCH_SIZE = 10
 NUMBER_OF_SUMMARIES_PER_KEYWORD = 2
 
@@ -53,4 +53,4 @@ if __name__ == "__main__":
         batch_summaries = json_response.get("summaries", [])
         summaries.extend(batch_summaries)
 
-    save_summaries(summaries=summaries, output_dir=SUMMARIES_OUTPUT_DIR, suffix="e.json")
+    save_summaries(summaries=summaries, output_dir=OUTPUT_DIR, suffix="e.json")

@@ -10,13 +10,13 @@ import random
 import json
 import os
 from dotenv import load_dotenv
+from config import KEYWORDS_PATH
 
 load_dotenv(override=True)
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 DATA_DIR = "UNS dataset/json_english_v2"
-KEYWORDS_PATH = "UNS dataset/json_english_aug/keywords.json"
 FILE_PATTERN = "*e.json"
 NUMBER_OF_SAMPLES = 20
 RANDOM_SEED = 42

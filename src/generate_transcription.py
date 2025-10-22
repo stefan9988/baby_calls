@@ -1,6 +1,7 @@
 from dataset_operations import get_data
 from openai_api import ChatGPTClient
 from config import (
+    OUTPUT_DIR,
     TRANSCRIPTION_GENERATOR_LLM_MODEL,
     TRANSCRIPTION_GENERATOR_SYSTEM_PROMPT,
     TRANSCRIPTION_GENERATOR_TEMPERATURE,
@@ -15,7 +16,6 @@ load_dotenv(override=True)
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-OUTPUT_DIR = "UNS dataset/json_english_aug"
 FILE_PATTERN = "*e.json"
 
 client = ChatGPTClient(api_key=OPENAI_API_KEY, model=TRANSCRIPTION_GENERATOR_LLM_MODEL)
