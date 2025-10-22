@@ -29,6 +29,14 @@ def get_llm_client(client_type: str, **kwargs) -> LLMInterface:
             api_key=kwargs.get("api_key"),
             device=kwargs.get("device"),
         )
+    elif client_type == "ollama":
+        from .ollama_client import OllamaClient
+        return OllamaClient(
+            model=kwargs.get("model"),
+            api_key=kwargs.get("api_key"),
+            base_url=kwargs.get("base_url"),
+            timeout=kwargs.get("timeout", 120),
+        )
 
     else:
         raise ValueError(
