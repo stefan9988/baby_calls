@@ -26,6 +26,14 @@ client = get_llm_client(
     model=config.KEYWORD_GENERATOR_LLM_MODEL,
 )
 
+
+def save_keywords():
+    os.makedirs(os.path.dirname(config.KEYWORDS_PATH), exist_ok=True)
+    with open(config.KEYWORDS_PATH, "w", encoding="utf-8") as f:
+        json.dump(json_response, f, indent=2, ensure_ascii=False)
+    print(f"✅ Saved {NUMBER_OF_SAMPLES} keyword phrases to {config.KEYWORDS_PATH}")
+
+
 if __name__ == "__main__":
     example_data = get_data(DATA_DIR, FILE_PATTERN)
     sampled_data = random.sample(
@@ -48,9 +56,6 @@ if __name__ == "__main__":
     if not json_response:
         print("❌ Failed to generate keywords.")
         exit(1)
-
-    os.makedirs(os.path.dirname(config.KEYWORDS_PATH), exist_ok=True)
-    with open(config.KEYWORDS_PATH, "w", encoding="utf-8") as f:
-        json.dump(json_response, f, indent=2, ensure_ascii=False)
-    print(f"✅ Saved {NUMBER_OF_SAMPLES} keyword phrases to {config.KEYWORDS_PATH}")
+    
+    save_keywords()
     create_metadata_file(config, filepath=config.METADATA_PATH)
