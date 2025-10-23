@@ -1,9 +1,9 @@
-OUTPUT_DIR = "UNS dataset/json_english_openai_4o"
+OUTPUT_DIR = "UNS dataset/json_english_llama_3_2"
 KEYWORDS_PATH = OUTPUT_DIR + "/keywords.json"
 METADATA_PATH = OUTPUT_DIR + "/metadata.json"
 
-CLIENT_TYPE = "openai"
-KEYWORD_GENERATOR_LLM_MODEL = "gpt-4o"
+CLIENT_TYPE = "ollama"  # Options: "openai", "huggingface", "ollama"
+KEYWORD_GENERATOR_LLM_MODEL = "llama3.2"
 KEYWORD_GENERATOR_TEMPERATURE = 0.9
 KEYWORD_GENERATOR_MAX_TOKENS = 1000
 KEYWORD_GENERATOR_SYSTEM_PROMPT = """
@@ -33,7 +33,7 @@ KEYWORD_GENERATOR_SYSTEM_PROMPT = """
     - Output only the JSON object containing the Python list (no explanations, no markdown).
 """
 
-SUMMARY_GENERATOR_LLM_MODEL = "gpt-4o"
+SUMMARY_GENERATOR_LLM_MODEL = "llama3.2"
 SUMMARY_GENERATOR_TEMPERATURE = 0.6
 SUMMARY_GENERATOR_MAX_TOKENS = 10000
 SUMMARY_GENERATOR_SYSTEM_PROMPT = """
@@ -80,9 +80,10 @@ Rules:
 - Use neutral, factual, compassionate tone — no judgments or medical advice.
 - Keep consistent sentence style and structure across all cases.
 - Output only the JSON object (no explanations, no markdown, no text outside JSON).
+- Do not write ``` or any other markdown syntax.
 """
 
-TRANSCRIPTION_GENERATOR_LLM_MODEL = "gpt-4o"
+TRANSCRIPTION_GENERATOR_LLM_MODEL = "llama3.2"
 TRANSCRIPTION_GENERATOR_TEMPERATURE = 0.6
 TRANSCRIPTION_GENERATOR_MAX_TOKENS = 10000
 TRANSCRIPTION_GENERATOR_SYSTEM_PROMPT = """

@@ -3,6 +3,7 @@ import json
 import time
 from pathlib import Path
 
+
 def get_data(data_dir, file_pattern):
     folder_path = Path(data_dir)
 
@@ -17,10 +18,7 @@ def get_data(data_dir, file_pattern):
             with open(file_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
                 # Return both the data and the file path
-                all_data.append({
-                    "file_path": str(file_path),
-                    "data": data
-                })
+                all_data.append({"file_path": str(file_path), "data": data})
         except json.JSONDecodeError as e:
             print(f"❌ Error decoding {file_path}: {e}")
 
@@ -33,7 +31,8 @@ def save_summaries(summaries, output_dir, suffix="e.json"):
 
     # Get next available number based on existing files
     existing_files = [
-        f for f in os.listdir(output_dir)
+        f
+        for f in os.listdir(output_dir)
         if f.endswith(suffix) and f.split(suffix)[0].isdigit()
     ]
     existing_numbers = [int(f.split(suffix)[0]) for f in existing_files]
@@ -43,7 +42,10 @@ def save_summaries(summaries, output_dir, suffix="e.json"):
         # Create unique call_id (with timestamp)
         call_id = f"{i}-record-{int((time.time() * 1000) + i)}_ms"
         # Ensure call_id is the first key in the dict
-        summary = {"call_id": call_id, **{k: v for k, v in summary.items() if k != "call_id"}}
+        summary = {
+            "call_id": call_id,
+            **{k: v for k, v in summary.items() if k != "call_id"},
+        }
 
         # Create filename like 1e.json, 2e.json, ...
         file_name = f"{i}{suffix}"
@@ -57,16 +59,11 @@ def save_summaries(summaries, output_dir, suffix="e.json"):
 
     print(f"\nTotal {len(summaries)} summaries saved at {output_dir}.")
 
+
 def create_metadata_file(config_module, filepath):
     """
     Create a metadata.json file with all variables from config.py.
-    If the file already exists, skip creating it but continue execution.
     """
-    # If file already exists, skip creation
-    if os.path.exists(filepath):
-        print(f"⚠️ Metadata file already exists at {filepath}. Skipping creation.")
-        return
-
     # Create folder if it doesn't exist
     os.makedirs(os.path.dirname(filepath), exist_ok=True)
 
@@ -82,6 +79,3 @@ def create_metadata_file(config_module, filepath):
         json.dump(config_dict, f, indent=2, ensure_ascii=False)
 
     print(f"✅ Metadata file created at {filepath}")
-
-        
-

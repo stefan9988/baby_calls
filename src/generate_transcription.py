@@ -1,5 +1,6 @@
 from dataset_operations import get_data, create_metadata_file
 from llms.llm_factory import get_llm_client
+from utils import convert_response_to_json
 import config
 
 import json
@@ -13,7 +14,11 @@ HUGGINGFACE_API_KEY = os.getenv("HUGGINGFACE_API_KEY")
 
 FILE_PATTERN = "*e.json"
 
-client = get_llm_client(client_type=config.CLIENT_TYPE, api_key=OPENAI_API_KEY, model=config.TRANSCRIPTION_GENERATOR_LLM_MODEL)
+client = get_llm_client(
+    client_type=config.CLIENT_TYPE,
+    api_key=OPENAI_API_KEY,
+    model=config.TRANSCRIPTION_GENERATOR_LLM_MODEL,
+)
 
 
 def get_participants(transcription_data: dict) -> list:
@@ -52,12 +57,17 @@ if __name__ == "__main__":
             response_format={"type": "json_object"},
         )
 
-        json_response = json.loads(reply)
+        json_response = convert_response_to_json(reply)
+        if not json_response:
+            print(
+                f"❌ Failed to generate transcription. Skipping file: {item['file_path']}"
+            )
+            continue
 
         participants = get_participants(json_response)
 
         call_id = item["data"].get("call_id")
-        
+
         final_doc = {
             "call_id": call_id,
             "participants": participants,
@@ -68,4 +78,6 @@ if __name__ == "__main__":
         with open(item["file_path"], "w", encoding="utf-8") as f:
             json.dump(final_doc, f, indent=2, ensure_ascii=False)
 
-    create_metadata_file(config, filepath=config.METADATA_PATH)        
+        print(f"✅ Transcription generated and saved for file: {item['file_path']}")
+
+    create_metadata_file(config, filepath=config.METADATA_PATH)
