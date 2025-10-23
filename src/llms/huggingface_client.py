@@ -44,7 +44,7 @@ class HuggingFaceLLM(LLMInterface):
             max_new_tokens=max_tokens,
             do_sample=True,
             temperature=temperature,
-            **kwargs,
+            # **kwargs,
         )
         input_len = inputs["input_ids"].shape[1]
         generated_ids = outputs[0][input_len:]

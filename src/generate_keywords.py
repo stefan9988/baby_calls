@@ -15,7 +15,7 @@ HUGGINGFACE_API_KEY = os.getenv("HUGGINGFACE_API_KEY")
 
 DATA_DIR = "UNS dataset/json_english_v2"
 FILE_PATTERN = "*e.json"
-NUMBER_OF_SAMPLES = 20
+NUMBER_OF_SAMPLES = 5
 RANDOM_SEED = 42
 
 # random.seed(RANDOM_SEED)
@@ -44,8 +44,8 @@ if __name__ == "__main__":
     ]
 
     reply = client.conv(
-        user_message=f"Generate {NUMBER_OF_SAMPLES} keyword phrases based on the following examples:\n"
-        + json.dumps(keyword_examples, indent=4),
+        user_message=f"""Generate {NUMBER_OF_SAMPLES} keyword phrases based on the following examples:\n
+            {json.dumps(keyword_examples, indent=4)}""",
         system_message=config.KEYWORD_GENERATOR_SYSTEM_PROMPT,
         temperature=config.KEYWORD_GENERATOR_TEMPERATURE,
         max_tokens=config.KEYWORD_GENERATOR_MAX_TOKENS,
@@ -56,6 +56,6 @@ if __name__ == "__main__":
     if not json_response:
         print("❌ Failed to generate keywords.")
         exit(1)
-    
+
     save_keywords()
     create_metadata_file(config, filepath=config.METADATA_PATH)

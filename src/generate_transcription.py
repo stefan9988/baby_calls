@@ -18,6 +18,7 @@ client = get_llm_client(
     client_type=config.CLIENT_TYPE,
     api_key=OPENAI_API_KEY,
     model=config.TRANSCRIPTION_GENERATOR_LLM_MODEL,
+    timeout=600,
 )
 
 

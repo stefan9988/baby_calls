@@ -7,4 +7,5 @@ def convert_response_to_json(response):
         return json_response
     except json.JSONDecodeError:
         print("❌ Error decoding JSON response")
+        print("Response was:\n", response)
         return None

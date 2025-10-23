@@ -28,8 +28,8 @@ class ChatGPTClient(LLMInterface):
                 {"role": "system", "content": system_message},
                 {"role": "user", "content": user_message},
             ],
-            temperature=temperature,
-            max_tokens=max_tokens,
+            # temperature=temperature,
+            max_completion_tokens=max_tokens,
             **kwargs,
         )
         return response.choices[0].message.content.strip()

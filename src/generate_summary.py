@@ -12,14 +12,14 @@ load_dotenv(override=True)
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 HUGGINGFACE_API_KEY = os.getenv("HUGGINGFACE_API_KEY")
 
-BATCH_SIZE = 4
+BATCH_SIZE = 10
 NUMBER_OF_SUMMARIES_PER_KEYWORD = 2
 
 client = get_llm_client(
     client_type=config.CLIENT_TYPE,
     api_key=OPENAI_API_KEY,
     model=config.SUMMARY_GENERATOR_LLM_MODEL,
-    timeout=300,
+    timeout=600,
 )
 
 if __name__ == "__main__":

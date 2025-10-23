@@ -1,9 +1,9 @@
-OUTPUT_DIR = "UNS dataset/json_english_llama_3_2"
+OUTPUT_DIR = "UNS dataset/json_english_EuroLLM_1_7B"
 KEYWORDS_PATH = OUTPUT_DIR + "/keywords.json"
 METADATA_PATH = OUTPUT_DIR + "/metadata.json"
 
-CLIENT_TYPE = "ollama"  # Options: "openai", "huggingface", "ollama"
-KEYWORD_GENERATOR_LLM_MODEL = "llama3.2"
+CLIENT_TYPE = "openai"  # Options: "openai", "huggingface", "ollama"
+KEYWORD_GENERATOR_LLM_MODEL = "gpt-5-mini"
 KEYWORD_GENERATOR_TEMPERATURE = 0.9
 KEYWORD_GENERATOR_MAX_TOKENS = 1000
 KEYWORD_GENERATOR_SYSTEM_PROMPT = """
@@ -33,7 +33,7 @@ KEYWORD_GENERATOR_SYSTEM_PROMPT = """
     - Output only the JSON object containing the Python list (no explanations, no markdown).
 """
 
-SUMMARY_GENERATOR_LLM_MODEL = "llama3.2"
+SUMMARY_GENERATOR_LLM_MODEL = "gpt-5-mini"
 SUMMARY_GENERATOR_TEMPERATURE = 0.6
 SUMMARY_GENERATOR_MAX_TOKENS = 10000
 SUMMARY_GENERATOR_SYSTEM_PROMPT = """
@@ -65,7 +65,21 @@ Output format example:
                     "temperature for several days"
                 ]
             }
+        },
+        {
+            "summary": {
+                "text": [
+                    "Infant of 6 months has been crying nonstop since receiving the 4-month vaccinations two days ago.",
+                    "Parents report increased irritability and difficulty soothing the baby.",
+                    "Baby is feeding normally but seems more clingy than usual.",
+                    "No fever or other symptoms reported."
+                ],
+                "key_words": [
+                    "cries nonstop after vaccination"
+                ]
+            }
         }
+        // ... continue for each input keyword
     ]
 }
 
@@ -83,7 +97,7 @@ Rules:
 - Do not write ``` or any other markdown syntax.
 """
 
-TRANSCRIPTION_GENERATOR_LLM_MODEL = "llama3.2"
+TRANSCRIPTION_GENERATOR_LLM_MODEL = "gpt-5-mini"
 TRANSCRIPTION_GENERATOR_TEMPERATURE = 0.6
 TRANSCRIPTION_GENERATOR_MAX_TOKENS = 10000
 TRANSCRIPTION_GENERATOR_SYSTEM_PROMPT = """
@@ -107,27 +121,40 @@ Example "text":
 ]
 
 # Task
-Write a naturalistic dialogue (phone triage style) that:
-- Covers every fact from the summary by eliciting it conversationally (questions from NURSE, answers/details from CALLER).
-- Adds light conversational glue (greetings, confirmations, brief clarifications), but does NOT introduce new clinical facts that contradict or go beyond the summary.
-- Reflects typical call dynamics: short turns, occasional fillers (“uh”, “okay”), clarifying questions, and brief responses from both speakers.
-- Keeps both speakers human and concise: prefer 3–18 words per turn; avoid long monologues.
+Write a naturalistic, phone-style dialogue where:
+- The **NURSE** leads the conversation with short, focused **questions only**.
+- The **CALLER** provides **longer, descriptive, emotionally natural answers** that cover every detail from the summary.
+- The **NURSE** may also ask **extra but relevant follow-up questions** about related symptoms or circumstances **not explicitly mentioned in the summary** (e.g., “Has there been any vomiting?” “Any rash or cough?”).  
+  In such cases, the **CALLER must respond negatively** or with a neutral denial (e.g., “No, nothing like that,” “No, she hasn’t had that.”).
+- The **CALLER speaks more** (roughly 65–75% of the dialogue), while the **NURSE’s turns are shorter** and always end with a question or gentle prompt.
 
-# IMPORTANT RULES FOR NURSE
-- The NURSE can **only ask questions**.  
-- The NURSE **cannot and must not give any advice**, explanations, or instructions.  
-- The NURSE should focus entirely on collecting information and clarifying symptoms.  
-- The NURSE must finish the conversation by politely stating that she will **transfer the call to the doctor** (e.g., “I will now transfer you to the doctor for further advice.”).
+# NURSE behavior rules
+- Only asks questions; never gives advice, instructions, or opinions.
+- Questions should stay natural, brief, and connected to the context (symptoms, duration, child’s condition, care actions, etc.).
+- The NURSE should use a warm, calm, and professional tone.
+- The call must end with a **warm closing**, such as:
+  - “Alright, thank you for sharing that, I’ll transfer you to the doctor now.”
+  - “Okay, I understand. Please stay on the line, the doctor will speak with you shortly.”
+  - “Thank you for the information, I’ll connect you with the doctor.”
+  - “Alright, I’ll just forward this to the doctor so they can continue with you.”
+  - “Thank you for your patience, the doctor will take over now.”
+  The phrasing should vary naturally — do NOT always use the same sentence.
 
-# Style & Content Rules
-- Start with CALLER greeting/opening; NURSE acknowledges and begins triage questions.
-- Ensure these common elements when relevant to the summary: age, duration, max temperature, how/where measured, medicines given/not given, feeding/appetite, sleep, respiratory/nasal symptoms, home measures already taken.
-- Use plain, empathetic language.
-- Do NOT invent third speakers or metadata. No timestamps.
-- Do NOT include diagnoses, opinions, or instructions of any kind.
+# CALLER behavior rules
+- Gives detailed, realistic answers that incorporate all summary points.
+- Can add small emotional or situational context (“we were a bit worried,” “it’s been like that for three days now”).
+- Uses natural spoken phrasing, occasional hesitation (“uh”, “well”, “you know”), and self-corrections.
+- Responds **negatively** to extra nurse questions not supported by the summary (e.g., denies additional symptoms).
+- Avoids introducing new, unsupported medical facts or treatments.
+
+# Style & Flow
+- Start with a greeting by the CALLER; NURSE acknowledges and starts triage questions.
+- Maintain a natural alternating rhythm (no long monologues from NURSE).
+- Include typical triage flow: age, duration, temperature, appetite, sleep, breathing, feeding, measures taken, etc.
+- End smoothly with the NURSE’s warm closing line as described above.
 
 # Output FORMAT (JSON)
-Return a single JSON object with this exact shape:
+Return a single JSON object with this exact structure:
 
 {
   "transcription": [
@@ -140,13 +167,14 @@ Return a single JSON object with this exact shape:
 Formatting constraints:
 - Keys must be exactly: "transcription", "speaker", "text".
 - "speaker" must be either "NURSE" or "CALLER" (uppercase).
-- "text" is a single string per turn. No embedded JSON, no arrays.
+- "text" is a single string per turn. No arrays, no metadata, no timestamps.
 - No trailing commas. No extra top-level keys. No markdown.
 
 # Faithfulness Checklist (silently apply)
-- [ ] Every summary point appears somewhere in the dialogue, asked/confirmed naturally.
-- [ ] NURSE only asks questions; gives no opinions or advice.
-- [ ] Conversation ends with NURSE transferring the call to a doctor.
-- [ ] Speakers alternate plausibly; no long unbroken monologues.
-- [ ] Output is valid JSON and matches the required schema.
+- [ ] Every summary point appears in the CALLER’s responses.
+- [ ] NURSE only asks short, guiding questions — no advice or explanations.
+- [ ] NURSE may ask additional related questions; CALLER must answer them negatively.
+- [ ] Conversation ends with a natural, varied warm closing by NURSE.
+- [ ] CALLER provides the majority of the content.
+- [ ] Output is valid JSON and follows the exact schema.
 """
