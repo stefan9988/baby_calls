@@ -35,7 +35,8 @@ RUN poetry install --no-root --no-interaction --no-ansi
 COPY . .
 
 # ===========================
-#   Entrypoint
+#   Entrypoint (flexible)
 # ===========================
 WORKDIR /app/src
-ENTRYPOINT ["python", "generate_keywords.py"]
+ENTRYPOINT ["python"]
+CMD ["generate_keywords.py"]
