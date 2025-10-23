@@ -11,6 +11,7 @@ load_dotenv(override=True)
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 HUGGINGFACE_API_KEY = os.getenv("HUGGINGFACE_API_KEY")
+OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL")
 
 FILE_PATTERN = "*e.json"
 
@@ -18,6 +19,7 @@ client = get_llm_client(
     client_type=config.CLIENT_TYPE,
     api_key=OPENAI_API_KEY,
     model=config.TRANSCRIPTION_GENERATOR_LLM_MODEL,
+    base_url=os.getenv("OLLAMA_BASE_URL"),
     timeout=600,
 )
 
