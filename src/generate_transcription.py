@@ -1,12 +1,7 @@
-from dataset_operations import get_data
-from openai_api import ChatGPTClient
-from config import (
-    OUTPUT_DIR,
-    TRANSCRIPTION_GENERATOR_LLM_MODEL,
-    TRANSCRIPTION_GENERATOR_SYSTEM_PROMPT,
-    TRANSCRIPTION_GENERATOR_TEMPERATURE,
-    TRANSCRIPTION_GENERATOR_MAX_TOKENS,
-)
+from dataset_operations import get_data, create_metadata_file
+from llms.llm_factory import get_llm_client
+from utils import convert_response_to_json
+import config
 
 import json
 import os
@@ -15,10 +10,15 @@ from dotenv import load_dotenv
 load_dotenv(override=True)
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+HUGGINGFACE_API_KEY = os.getenv("HUGGINGFACE_API_KEY")
 
 FILE_PATTERN = "*e.json"
 
-client = ChatGPTClient(api_key=OPENAI_API_KEY, model=TRANSCRIPTION_GENERATOR_LLM_MODEL)
+client = get_llm_client(
+    client_type=config.CLIENT_TYPE,
+    api_key=OPENAI_API_KEY,
+    model=config.TRANSCRIPTION_GENERATOR_LLM_MODEL,
+)
 
 
 def get_participants(transcription_data: dict) -> list:
@@ -34,7 +34,7 @@ def get_participants(transcription_data: dict) -> list:
 
 
 if __name__ == "__main__":
-    data = get_data(data_dir=OUTPUT_DIR, file_pattern=FILE_PATTERN)
+    data = get_data(data_dir=config.OUTPUT_DIR, file_pattern=FILE_PATTERN)
 
     for item in data:
         # Skip if transcription already exists
@@ -51,18 +51,23 @@ if __name__ == "__main__":
 
         reply = client.conv(
             user_message=f"""Generate a transcription for the following text:{summary_text}""",
-            system_message=TRANSCRIPTION_GENERATOR_SYSTEM_PROMPT,
-            temperature=TRANSCRIPTION_GENERATOR_TEMPERATURE,
-            max_tokens=TRANSCRIPTION_GENERATOR_MAX_TOKENS,
+            system_message=config.TRANSCRIPTION_GENERATOR_SYSTEM_PROMPT,
+            temperature=config.TRANSCRIPTION_GENERATOR_TEMPERATURE,
+            max_tokens=config.TRANSCRIPTION_GENERATOR_MAX_TOKENS,
             response_format={"type": "json_object"},
         )
 
-        json_response = json.loads(reply)
+        json_response = convert_response_to_json(reply)
+        if not json_response:
+            print(
+                f"❌ Failed to generate transcription. Skipping file: {item['file_path']}"
+            )
+            continue
 
         participants = get_participants(json_response)
 
         call_id = item["data"].get("call_id")
-        
+
         final_doc = {
             "call_id": call_id,
             "participants": participants,
@@ -71,4 +76,8 @@ if __name__ == "__main__":
         }
 
         with open(item["file_path"], "w", encoding="utf-8") as f:
-            json.dump(final_doc, f, indent=2, ensure_ascii=False)        
+            json.dump(final_doc, f, indent=2, ensure_ascii=False)
+
+        print(f"✅ Transcription generated and saved for file: {item['file_path']}")
+
+    create_metadata_file(config, filepath=config.METADATA_PATH)
