@@ -1,4 +1,8 @@
+import os
 from .llm_interface import LLMInterface
+from dotenv import load_dotenv
+
+load_dotenv(override=True)
 
 
 def get_llm_client(client_type: str, **kwargs) -> LLMInterface:
@@ -13,13 +17,13 @@ def get_llm_client(client_type: str, **kwargs) -> LLMInterface:
                     - model
                     - device
     """
-    client_types = ["openai", "huggingface"]
+    client_types = ["openai", "huggingface", "ollama"]
 
     if client_type == "openai":
         from .openai_api import ChatGPTClient
 
         return ChatGPTClient(
-            api_key=kwargs.get("api_key"),
+            api_key=kwargs.get("api_key") or os.getenv("OPENAI_API_KEY"),
             model=kwargs.get("model"),
         )
 
@@ -28,7 +32,7 @@ def get_llm_client(client_type: str, **kwargs) -> LLMInterface:
 
         return HuggingFaceLLM(
             model_id=kwargs.get("model"),
-            api_key=kwargs.get("api_key"),
+            api_key=kwargs.get("api_key") or os.getenv("HUGGINGFACE_API_KEY"),
             device=kwargs.get("device"),
         )
     elif client_type == "ollama":
@@ -37,7 +41,7 @@ def get_llm_client(client_type: str, **kwargs) -> LLMInterface:
         return OllamaClient(
             model=kwargs.get("model"),
             api_key=kwargs.get("api_key"),
-            base_url=kwargs.get("base_url"),
+            base_url=kwargs.get("base_url") or os.getenv("OLLAMA_BASE_URL"),
             timeout=kwargs.get("timeout", 120),
         )
 

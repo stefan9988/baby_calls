@@ -1,9 +1,9 @@
-OUTPUT_DIR = "UNS dataset/json_english_gpt_oss_20b"
+OUTPUT_DIR = "UNS dataset/json_english_EuroLLM_1_7B"
 KEYWORDS_PATH = OUTPUT_DIR + "/keywords.json"
 METADATA_PATH = OUTPUT_DIR + "/metadata.json"
 
-CLIENT_TYPE = "ollama"  # Options: "openai", "huggingface", "ollama"
-KEYWORD_GENERATOR_LLM_MODEL = "gpt-oss"
+CLIENT_TYPE = "huggingface"  # Options: "openai", "huggingface", "ollama"
+KEYWORD_GENERATOR_LLM_MODEL = "utter-project/EuroLLM-1.7B"
 KEYWORD_GENERATOR_TEMPERATURE = 0.9
 KEYWORD_GENERATOR_MAX_TOKENS = 1000
 KEYWORD_GENERATOR_SYSTEM_PROMPT = """
@@ -33,7 +33,7 @@ KEYWORD_GENERATOR_SYSTEM_PROMPT = """
     - Output only the JSON object containing the Python list (no explanations, no markdown).
 """
 
-SUMMARY_GENERATOR_LLM_MODEL = "gpt-oss"
+SUMMARY_GENERATOR_LLM_MODEL = "utter-project/EuroLLM-1.7B"
 SUMMARY_GENERATOR_TEMPERATURE = 0.6
 SUMMARY_GENERATOR_MAX_TOKENS = 10000
 SUMMARY_GENERATOR_SYSTEM_PROMPT = """
@@ -97,7 +97,7 @@ Rules:
 - Do not write ``` or any other markdown syntax.
 """
 
-TRANSCRIPTION_GENERATOR_LLM_MODEL = "gpt-oss"
+TRANSCRIPTION_GENERATOR_LLM_MODEL = "utter-project/EuroLLM-1.7B"
 TRANSCRIPTION_GENERATOR_TEMPERATURE = 0.6
 TRANSCRIPTION_GENERATOR_MAX_TOKENS = 10000
 TRANSCRIPTION_GENERATOR_SYSTEM_PROMPT = """
