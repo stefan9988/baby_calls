@@ -90,3 +90,33 @@ python generate_transcription.py
 
 * Builds the final document and writes it back to the same file path
 
+### 4) One-shot pipeline via Docker helper script
+
+You can build the Docker image and run all three steps (keywords → summaries → transcriptions) in one go using run_docker.sh.
+
+```bash
+chmod +x run_docker.sh
+./run_docker.sh
+```
+
+**What it does**
+
+* Builds the Docker image named baby-calls
+
+* Runs generate_keywords.py in the container
+
+* Mounts your local dataset folder into the container:
+
+   Host: $(pwd)/UNS dataset
+
+   Container: /app/src/UNS dataset
+
+   Loads environment variables from .env
+
+   Uses host networking (--network host)
+
+* Runs generate_summary.py (same mount, env, and network settings)
+
+* Runs generate_transcription.py (same mount, env, and network settings)
+
+* If any step fails, the script stops and shows a red ✗ message; otherwise you’ll see a final green “All tasks completed successfully!” ✓
