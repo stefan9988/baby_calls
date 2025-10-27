@@ -3,49 +3,57 @@ from llms.llm_factory import get_llm_client
 from utils import convert_response_to_json
 import config
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import json
 import os
-
+from typing import Dict, Any, Tuple, Optional
 
 FILE_PATTERN = "*e.json"
+# Tune this if you hit rate limits or want more/less parallelism
+MAX_WORKERS = 10
 
-client = get_llm_client(
-    client_type=config.CLIENT_TYPE,
-    model=config.TRANSCRIPTION_GENERATOR_LLM_MODEL,
-    timeout=600,
-)
-
-
-def get_participants(transcription_data: dict) -> list:
+def safe_get_summary_text(item: Dict[str, Any]) -> str:
     """
-    Return unique speakers in order of appearance.
+    Extract a plain summary string from the item if present.
+    Accepts both dict-based summaries (with 'text') and string summaries.
     """
-    speakers = []
-    for entry in transcription_data.get("transcription", []):
-        speaker = entry.get("speaker")
-        if speaker and speaker not in speakers:
-            speakers.append(speaker)
-    return speakers
+    summary = item.get("data", {}).get("summary", "")
+    if isinstance(summary, dict):
+        return summary.get("text", "") or ""
+    if isinstance(summary, str):
+        return summary
+    return ""
 
+def build_prompt(summary_text: str) -> str:
+    return f"Generate a transcription for the following text:{summary_text}"
 
-if __name__ == "__main__":
-    data = get_data(data_dir=config.OUTPUT_DIR, file_pattern=FILE_PATTERN)
+def process_one(item: Dict[str, Any]) -> Tuple[str, bool, Optional[str]]:
+    """
+    Process a single file.
+    Returns (file_path, success, error_message_or_none).
+    """
+    file_path = item.get("file_path", "<unknown>")
+    data = item.get("data", {})
 
-    for item in data:
-        # Skip if transcription already exists
-        if "transcription" in item["data"]:
-            print(f"Transcription already exists. Skipping file: {item['file_path']}")
-            continue
+    # Skip if transcription already exists
+    if "transcription" in data:
+        print(f"Transcription already exists. Skipping file: {file_path}")
+        return file_path, True, None
 
-        print(f"Creating transcription for file: {item['file_path']}")
+    print(f"Creating transcription for file: {file_path}")
 
-        # Pull summary text (fallback to empty string if missing)
-        summary_text = ""
-        if isinstance(item.get("data", {}).get("summary"), dict):
-            summary_text = item["data"]["summary"].get("text", "") or ""
+    try:
+        # Per-thread client to avoid shared-state/thread-safety issues
+        client = get_llm_client(
+            client_type=config.CLIENT_TYPE,
+            model=config.TRANSCRIPTION_GENERATOR_LLM_MODEL,
+            timeout=600,
+        )
+
+        summary_text = safe_get_summary_text(item)
 
         reply = client.conv(
-            user_message=f"""Generate a transcription for the following text:{summary_text}""",
+            user_message=build_prompt(summary_text),
             system_message=config.TRANSCRIPTION_GENERATOR_SYSTEM_PROMPT,
             temperature=config.TRANSCRIPTION_GENERATOR_TEMPERATURE,
             max_tokens=config.TRANSCRIPTION_GENERATOR_MAX_TOKENS,
@@ -54,25 +62,59 @@ if __name__ == "__main__":
 
         json_response = convert_response_to_json(reply)
         if not json_response:
-            print(
-                f"❌ Failed to generate transcription. Skipping file: {item['file_path']}"
-            )
-            continue
+            msg = "Failed to decode JSON from model response."
+            print(f"❌ {msg} Skipping file: {file_path}")
+            return file_path, False, msg
 
-        participants = get_participants(json_response)
-
-        call_id = item["data"].get("call_id")
+        # Extract participants from response (order preserved by first appearance)
+        participants = []
+        for entry in json_response.get("transcription", []):
+            sp = entry.get("speaker")
+            if sp and sp not in participants:
+                participants.append(sp)
 
         final_doc = {
-            "call_id": call_id,
+            "call_id": data.get("call_id"),
             "participants": participants,
             "transcription": json_response.get("transcription", []),
-            "summary": item["data"].get("summary", {}),
+            "summary": data.get("summary", {}),
         }
 
-        with open(item["file_path"], "w", encoding="utf-8") as f:
+        # Write back to the same file (each file is unique => no lock needed)
+        with open(file_path, "w", encoding="utf-8") as f:
             json.dump(final_doc, f, indent=2, ensure_ascii=False)
 
-        print(f"✅ Transcription generated and saved for file: {item['file_path']}")
+        print(f"✅ Transcription generated and saved for file: {file_path}")
+        return file_path, True, None
 
+    except Exception as e:
+        msg = f"Exception: {e}"
+        print(f"❌ {msg} | File: {file_path}")
+        return file_path, False, msg
+
+if __name__ == "__main__":
+    data = get_data(data_dir=config.OUTPUT_DIR, file_pattern=FILE_PATTERN)
+
+    if not data:
+        print("⚠️ No matching files found.")
+        create_metadata_file(config, filepath=config.METADATA_PATH)
+        raise SystemExit(0)
+
+    print(f"📦 Found {len(data)} files to evaluate (pattern: {FILE_PATTERN}).")
+    workers = min(MAX_WORKERS, max(1, len(data)))
+    print(f"🧵 Running up to {workers} threads in parallel.")
+
+    successes = 0
+    failures = 0
+
+    with ThreadPoolExecutor(max_workers=workers) as executor:
+        future_map = {executor.submit(process_one, item): item for item in data}
+        for fut in as_completed(future_map):
+            _, ok, _ = fut.result()
+            if ok:
+                successes += 1
+            else:
+                failures += 1
+
+    print(f"🏁 Done. Success: {successes}, Failures: {failures}, Total: {len(data)}")
     create_metadata_file(config, filepath=config.METADATA_PATH)
