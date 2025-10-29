@@ -1,5 +1,6 @@
 .env
 .venv/
+.claude/
 .mypy_cache/
 __pycache__/
 UNS dataset/
