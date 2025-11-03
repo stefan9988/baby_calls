@@ -16,6 +16,11 @@ protobuf = "^6.33.0"
 sdialog = "^0.3.2"
 
 
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.4.2"
+pytest-mock = "^3.15.1"
+pytest-cov = "^7.0.0"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
