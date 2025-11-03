@@ -23,6 +23,15 @@ class OllamaClient(LLMInterface):
         base_url: Optional[str] = None,
         timeout: int = 120,
     ):
+        """
+        Initialize Ollama client for local LLM inference.
+
+        Args:
+            model: Ollama model name (e.g., 'llama2', 'mistral')
+            api_key: Not used for Ollama, kept for interface compatibility
+            base_url: Ollama server URL (default: "http://localhost:11434")
+            timeout: Request timeout in seconds (default: 120)
+        """
         super().__init__(api_key or "", model)
         self.base_url = (base_url or "http://localhost:11434").rstrip("/")
         self.timeout = timeout
@@ -35,6 +44,25 @@ class OllamaClient(LLMInterface):
         max_tokens: int = 500,
         **kwargs: Any,
     ) -> str:
+        """
+        Generate text using Ollama's local inference API.
+
+        Sends a chat request to the Ollama server with system and user messages.
+        Handles various response formats from different Ollama versions.
+
+        Args:
+            user_message: The user's input message
+            system_message: System prompt to set behavior (default: "You are a helpful assistant.")
+            temperature: Sampling temperature for generation (0.0-2.0)
+            max_tokens: Maximum tokens to generate (-1 for unlimited)
+            **kwargs: Additional Ollama options (e.g., top_p, seed, format)
+
+        Returns:
+            str: Model's response text
+
+        Raises:
+            RuntimeError: If HTTP request fails or Ollama returns an error
+        """
         # Build Ollama options from known params + passthrough kwargs
         options: Dict[str, Any] = {
             "temperature": float(temperature),

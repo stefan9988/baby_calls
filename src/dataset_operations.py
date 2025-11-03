@@ -8,6 +8,26 @@ logger = setup_logger(__name__)
 
 
 def get_data(data_dir, file_pattern):
+    """
+    Load JSON files matching a pattern from a directory.
+
+    Args:
+        data_dir (str): Directory path containing JSON files
+        file_pattern (str): Glob pattern to match files (e.g., "*e.json")
+
+    Returns:
+        list[dict]: List of dictionaries, each containing:
+            - 'file_path': Absolute path to the JSON file
+            - 'data': Parsed JSON content
+
+    Raises:
+        FileNotFoundError: If data_dir does not exist
+
+    Examples:
+        >>> data = get_data("UNS dataset/json", "*e.json")
+        >>> print(len(data))
+        150
+    """
     folder_path = Path(data_dir)
 
     if not folder_path.exists():
@@ -30,6 +50,31 @@ def get_data(data_dir, file_pattern):
 
 
 def save_summaries(summaries, output_dir, suffix="e.json"):
+    """
+    Save summary dictionaries to numbered JSON files with auto-incrementing names.
+
+    Scans existing files in output_dir to determine the next available number,
+    ensuring no files are overwritten. Each summary is enriched with a unique
+    call_id before saving.
+
+    Args:
+        summaries (list[dict]): List of summary dictionaries to save
+        output_dir (str): Target directory for output files
+        suffix (str, optional): File suffix/extension. Defaults to "e.json"
+
+    Returns:
+        None
+
+    Side effects:
+        - Creates output_dir if it doesn't exist
+        - Writes numbered JSON files (e.g., 1e.json, 2e.json, ...)
+        - Logs progress for each saved file
+
+    Examples:
+        >>> summaries = [{"summary": {"text": ["Patient info..."]}}]
+        >>> save_summaries(summaries, "output", "e.json")
+        # Creates output/1e.json, output/2e.json, etc.
+    """
     os.makedirs(output_dir, exist_ok=True)
 
     # Get next available number based on existing files
@@ -65,7 +110,28 @@ def save_summaries(summaries, output_dir, suffix="e.json"):
 
 def create_metadata_file(config_module, filepath):
     """
-    Create a metadata.json file with all variables from config.py.
+    Create a metadata JSON file containing all configuration variables.
+
+    Extracts all non-private, non-callable attributes from the provided
+    config module and saves them as a JSON file for reproducibility and
+    audit purposes.
+
+    Args:
+        config_module: Python module object containing configuration variables
+        filepath (str): Target path for the metadata JSON file
+
+    Returns:
+        None
+
+    Side effects:
+        - Creates parent directories if they don't exist
+        - Writes JSON file with all config variables
+        - Logs success message
+
+    Examples:
+        >>> import config
+        >>> create_metadata_file(config, "output/metadata.json")
+        # Creates output/metadata.json with all config variables
     """
     # Create folder if it doesn't exist
     os.makedirs(os.path.dirname(filepath), exist_ok=True)

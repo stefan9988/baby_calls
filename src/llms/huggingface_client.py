@@ -34,7 +34,20 @@ class HuggingFaceLLM(LLMInterface):
         **kwargs,
     ) -> str:
         """
-        Generate text using a Hugging Face model (EuroLLM, Llama, Mistral, etc.)
+        Generate text using a Hugging Face transformer model.
+
+        Supports various models including EuroLLM, Llama, Mistral, etc.
+        Combines system and user messages into a single prompt.
+
+        Args:
+            user_message: The user's input message
+            system_message: Optional system prompt prepended to user message
+            temperature: Sampling temperature for generation (0.0-1.0)
+            max_tokens: Maximum new tokens to generate
+            **kwargs: Additional generation parameters (currently not used)
+
+        Returns:
+            str: Generated text, with input prompt removed and special tokens stripped
         """
         prompt = f"{system_message}\n{user_message}" if system_message else user_message
 

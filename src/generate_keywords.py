@@ -26,6 +26,23 @@ client = get_llm_client(
 
 
 def save_keywords():
+    """
+    Save generated keywords to a JSON file.
+
+    Uses the global json_response variable containing keywords generated
+    by the LLM and saves them to the path specified in config.KEYWORDS_PATH.
+
+    Returns:
+        None
+
+    Side effects:
+        - Creates parent directories if they don't exist
+        - Writes keywords to config.KEYWORDS_PATH
+        - Logs success message
+
+    Raises:
+        NameError: If json_response is not defined in the global scope
+    """
     os.makedirs(os.path.dirname(config.KEYWORDS_PATH), exist_ok=True)
     with open(config.KEYWORDS_PATH, "w", encoding="utf-8") as f:
         json.dump(json_response, f, indent=2, ensure_ascii=False)

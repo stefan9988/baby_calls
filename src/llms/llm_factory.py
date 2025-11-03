@@ -7,15 +7,31 @@ load_dotenv(override=True)
 
 def get_llm_client(client_type: str, **kwargs) -> LLMInterface:
     """
-    Factory function to create LLMInterface instances based on client_type.
+    Factory function to create LLM client instances based on provider type.
+
+    Supports multiple LLM providers with unified interface. Automatically
+    loads API keys from environment variables if not provided.
 
     Args:
-        client_type (str): 'openai' or 'huggingface'.
-        kwargs: parameters required for the specific LLM client initialization.
-                Common ones include:
-                    - api_key
-                    - model
-                    - device
+        client_type: Provider name - 'openai', 'huggingface', or 'ollama'
+        **kwargs: Provider-specific parameters:
+            - api_key (str, optional): API key (falls back to env vars)
+            - model (str): Model identifier or name
+            - device (str, optional): For HuggingFace - 'cuda' or 'cpu'
+            - base_url (str, optional): For Ollama - API endpoint URL
+            - timeout (int, optional): Request timeout in seconds
+
+    Returns:
+        LLMInterface: Configured client instance implementing LLMInterface
+
+    Raises:
+        ValueError: If client_type is not supported
+
+    Examples:
+        >>> client = get_llm_client('openai', model='gpt-4')
+        >>> response = client.conv("Hello", "You are helpful")
+        >>>
+        >>> client = get_llm_client('ollama', model='llama2', base_url='http://localhost:11434')
     """
     client_types = ["openai", "huggingface", "ollama"]
 

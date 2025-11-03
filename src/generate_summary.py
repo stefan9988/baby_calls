@@ -15,6 +15,15 @@ NUMBER_OF_SUMMARIES_PER_KEYWORD = 2
 MAX_WORKERS = 5
 
 def build_prompt(keywords_chunk):
+    """
+    Build a user prompt for generating summaries from keywords.
+
+    Args:
+        keywords_chunk (list[str]): List of keyword phrases
+
+    Returns:
+        str: Formatted prompt string instructing the LLM to generate summaries
+    """
     return (
         f"Generate {NUMBER_OF_SUMMARIES_PER_KEYWORD} different summaries per keyword.\n"
         f"Change context for each summary while keeping it realistic.\n"
@@ -24,8 +33,23 @@ def build_prompt(keywords_chunk):
 
 def process_batch(batch_idx, keywords_chunk):
     """
-    Run a single batch in its own thread.
-    Returns (batch_idx, summaries_list) or (batch_idx, []) on failure.
+    Process a batch of keywords to generate summaries using the LLM.
+
+    Creates an LLM client, sends keywords to generate summaries, and
+    returns the results. Designed for concurrent execution in threads.
+
+    Args:
+        batch_idx (int): Index of the current batch (for logging)
+        keywords_chunk (list[str]): Keywords to generate summaries for
+
+    Returns:
+        tuple[int, list[dict]]: A tuple containing:
+            - batch_idx: The batch index (unchanged)
+            - summaries: List of generated summary dictionaries, or [] on failure
+
+    Side effects:
+        - Logs success/failure messages
+        - Makes API calls to the configured LLM
     """
     try:
         client = get_llm_client(

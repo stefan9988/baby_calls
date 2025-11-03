@@ -7,13 +7,27 @@ logger = setup_logger(__name__)
 
 def convert_response_to_json(response):
     """
-    Converts an LLM response into a JSON-compatible Python object.
+    Convert an LLM response into a JSON-compatible Python object.
 
-    Handles:
+    Handles multiple response formats including:
     - Standard JSON strings
-    - Markdown-formatted JSON (```json ... ```)
-    - JSON lists or dicts
-    - Already-parsed Python dicts/lists
+    - Markdown-formatted JSON with code fences (```json ... ```)
+    - Pre-parsed Python dicts or lists
+    - JSON with optional language hints
+
+    Args:
+        response: LLM response as string, dict, or list
+
+    Returns:
+        dict or list: Parsed JSON object, or None if parsing fails
+
+    Examples:
+        >>> convert_response_to_json('{"key": "value"}')
+        {'key': 'value'}
+        >>> convert_response_to_json('```json\\n{"key": "value"}\\n```')
+        {'key': 'value'}
+        >>> convert_response_to_json({'key': 'value'})
+        {'key': 'value'}
     """
 
     # Case 1: response is already a dict or list

@@ -8,6 +8,13 @@ class ChatGPTClient(LLMInterface):
     """
 
     def __init__(self, api_key: str, model: str = "gpt-4o"):
+        """
+        Initialize OpenAI ChatGPT client.
+
+        Args:
+            api_key: OpenAI API key
+            model: Model identifier (default: "gpt-4o")
+        """
         super().__init__(api_key, model)
         self.client = OpenAI(api_key=self.api_key)
 
@@ -21,6 +28,16 @@ class ChatGPTClient(LLMInterface):
     ) -> str:
         """
         Send a message to ChatGPT and return the model's response.
+
+        Args:
+            user_message: The user's input message
+            system_message: System prompt to set behavior (default: "You are a helpful assistant.")
+            temperature: Sampling temperature 0.0-2.0 (currently not used)
+            max_tokens: Maximum tokens in response
+            **kwargs: Additional OpenAI API parameters (e.g., response_format)
+
+        Returns:
+            str: Model's response text, stripped of whitespace
         """
         response = self.client.chat.completions.create(
             model=self.model,

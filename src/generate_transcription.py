@@ -17,8 +17,18 @@ MAX_WORKERS = 10
 
 def safe_get_summary_text(item: Dict[str, Any]) -> str:
     """
-    Extract a plain summary string from the item if present.
-    Accepts both dict-based summaries (with 'text') and string summaries.
+    Extract summary text from a data item with fallback handling.
+
+    Supports multiple summary formats:
+    - Dictionary with 'text' field (returns the text value)
+    - Direct string value
+    - Missing or malformed data (returns empty string)
+
+    Args:
+        item: Dictionary containing 'data' -> 'summary' structure
+
+    Returns:
+        str: Extracted summary text, or empty string if unavailable
     """
     summary = item.get("data", {}).get("summary", "")
     if isinstance(summary, dict):
@@ -28,12 +38,40 @@ def safe_get_summary_text(item: Dict[str, Any]) -> str:
     return ""
 
 def build_prompt(summary_text: str) -> str:
+    """
+    Build a user prompt for generating transcriptions from summary text.
+
+    Args:
+        summary_text: Summary text describing the medical case
+
+    Returns:
+        str: Formatted prompt string for the LLM
+    """
     return f"Generate a transcription for the following text:{summary_text}"
 
 def process_one(item: Dict[str, Any]) -> Tuple[str, bool, Optional[str]]:
     """
-    Process a single file.
-    Returns (file_path, success, error_message_or_none).
+    Process a single data item to generate and save a transcription.
+
+    Skips items that already have transcriptions. Creates an LLM client,
+    generates a conversation transcript from the summary, extracts participants,
+    and writes the complete document back to the original file.
+
+    Args:
+        item: Dictionary containing:
+            - 'file_path': Path to the JSON file
+            - 'data': Data dictionary with 'summary' and optionally 'transcription'
+
+    Returns:
+        tuple[str, bool, Optional[str]]: A tuple containing:
+            - file_path: The file path (unchanged)
+            - success: True if successful, False otherwise
+            - error_message: Error description if failed, None if successful
+
+    Side effects:
+        - Logs progress and errors
+        - Makes API calls to the LLM
+        - Overwrites the original JSON file with transcription added
     """
     file_path = item.get("file_path", "<unknown>")
     data = item.get("data", {})
