@@ -5,6 +5,10 @@ LLM = "openai:gpt-5-mini"
 INPUT_DIR = "UNS dataset/json_english_v2"
 OUTPUT_DIR = "UNS dataset/json_english_sdialog"
 
+MAX_TURNS = 25
+LENGTH_ORCHESTRATOR_MIN = 12
+LENGTH_ORCHESTRATOR_MAX = 20
+
 nurse = Persona(
     name="NURSE",
     role="triage nurse",
@@ -21,6 +25,7 @@ nurse = Persona(
         - “Alright, I’ll just forward this to the doctor so they can continue with you.”
         - “Thank you for your patience, the doctor will take over now.”
         The phrasing should vary naturally — do NOT always use the same sentence.""",
+    language="English"
 )
 caller = Persona(
     name="CALLER",
@@ -40,8 +45,9 @@ caller = Persona(
         - Maintain a realistic, cooperative tone — you’re a **concerned but composed parent**, not defensive or dismissive.
         - DO NOT REPEAT INFORMATION ALREADY PROVIDED IN EARLIER TURNS.
     """,
+    language="English"
 )
-ctx = Context(
+context = Context(
     topics=["pediatric triage", "infant health"],
     notes="""
         Write a naturalistic, phone-style dialogue where:
@@ -51,6 +57,6 @@ ctx = Context(
         - The **NURSE** should ask multiple specific questions to gather details (about feeding, symptoms, duration, other symptoms, etc.).
         - The **NURSE** may also ask **extra but relevant follow-up questions** about related symptoms or circumstances **not explicitly mentioned in the summary** (e.g., "Has there been any vomiting?" "Any rash or cough?").
         In such cases, the **CALLER must respond negatively** or with a neutral denial (e.g., "No, nothing like that," "No, she hasn't had that.").
-        - Prefer more turns with shorter caller responses (target ~10–16 total turns) before the nurse’s final warm closing.
+        - Prefer more turns with shorter caller responses before the nurse’s final warm closing.
         """,
 )
