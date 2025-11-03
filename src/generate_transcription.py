@@ -1,12 +1,15 @@
 from dataset_operations import get_data, create_metadata_file
 from llms.llm_factory import get_llm_client
 from utils import convert_response_to_json
+from logger import setup_logger
 import config
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import json
 import os
 from typing import Dict, Any, Tuple, Optional
+
+logger = setup_logger(__name__)
 
 FILE_PATTERN = "*e.json"
 # Tune this if you hit rate limits or want more/less parallelism
@@ -37,10 +40,10 @@ def process_one(item: Dict[str, Any]) -> Tuple[str, bool, Optional[str]]:
 
     # Skip if transcription already exists
     if "transcription" in data:
-        print(f"Transcription already exists. Skipping file: {file_path}")
+        logger.info(f"Transcription already exists. Skipping file: {file_path}")
         return file_path, True, None
 
-    print(f"Creating transcription for file: {file_path}")
+    logger.info(f"Creating transcription for file: {file_path}")
 
     try:
         # Per-thread client to avoid shared-state/thread-safety issues
@@ -62,8 +65,8 @@ def process_one(item: Dict[str, Any]) -> Tuple[str, bool, Optional[str]]:
 
         json_response = convert_response_to_json(reply)
         if not json_response:
-            msg = "Failed to decode JSON from model response."
-            print(f"❌ {msg} Skipping file: {file_path}")
+            msg = "Failed to decode JSON from model response"
+            logger.error(f"{msg}. Skipping file: {file_path}")
             return file_path, False, msg
 
         # Extract participants from response (order preserved by first appearance)
@@ -84,25 +87,25 @@ def process_one(item: Dict[str, Any]) -> Tuple[str, bool, Optional[str]]:
         with open(file_path, "w", encoding="utf-8") as f:
             json.dump(final_doc, f, indent=2, ensure_ascii=False)
 
-        print(f"✅ Transcription generated and saved for file: {file_path}")
+        logger.info(f"Transcription generated and saved for file: {file_path}")
         return file_path, True, None
 
     except Exception as e:
         msg = f"Exception: {e}"
-        print(f"❌ {msg} | File: {file_path}")
+        logger.error(f"{msg} | File: {file_path}")
         return file_path, False, msg
 
 if __name__ == "__main__":
     data = get_data(data_dir=config.OUTPUT_DIR, file_pattern=FILE_PATTERN)
 
     if not data:
-        print("⚠️ No matching files found.")
+        logger.warning("No matching files found")
         create_metadata_file(config, filepath=config.METADATA_PATH)
         raise SystemExit(0)
 
-    print(f"📦 Found {len(data)} files to evaluate (pattern: {FILE_PATTERN}).")
+    logger.info(f"Found {len(data)} files to evaluate (pattern: {FILE_PATTERN})")
     workers = min(MAX_WORKERS, max(1, len(data)))
-    print(f"🧵 Running up to {workers} threads in parallel.")
+    logger.info(f"Running up to {workers} threads in parallel")
 
     successes = 0
     failures = 0
@@ -116,5 +119,5 @@ if __name__ == "__main__":
             else:
                 failures += 1
 
-    print(f"🏁 Done. Success: {successes}, Failures: {failures}, Total: {len(data)}")
+    logger.info(f"Done. Success: {successes}, Failures: {failures}, Total: {len(data)}")
     create_metadata_file(config, filepath=config.METADATA_PATH)

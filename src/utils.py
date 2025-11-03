@@ -1,5 +1,8 @@
 import json
 import re
+from logger import setup_logger
+
+logger = setup_logger(__name__)
 
 
 def convert_response_to_json(response):
@@ -27,6 +30,6 @@ def convert_response_to_json(response):
         json_response = json.loads(response)
         return json_response
     except json.JSONDecodeError:
-        print("❌ Error decoding JSON response")
-        print("Response was:\n", response)
+        logger.error("Error decoding JSON response")
+        logger.debug(f"Response was: {response}")
         return None

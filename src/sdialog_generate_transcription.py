@@ -38,4 +38,4 @@ for item in data:
         caller_agent, context=context, max_turns=config_sdialog.MAX_TURNS
     )
     dialog.print()
-    dialog.to_file(config_sdialog.OUTPUT_DIR + "/" + filename)
+    dialog.to_file(os.path.join(config_sdialog.OUTPUT_DIR, filename))

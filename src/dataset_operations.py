@@ -2,6 +2,9 @@ import os
 import json
 import time
 from pathlib import Path
+from logger import setup_logger
+
+logger = setup_logger(__name__)
 
 
 def get_data(data_dir, file_pattern):
@@ -20,9 +23,9 @@ def get_data(data_dir, file_pattern):
                 # Return both the data and the file path
                 all_data.append({"file_path": str(file_path), "data": data})
         except json.JSONDecodeError as e:
-            print(f"❌ Error decoding {file_path}: {e}")
+            logger.error(f"Error decoding {file_path}: {e}")
 
-    print(f"✅ Loaded {len(all_data)} files successfully.")
+    logger.info(f"Loaded {len(all_data)} files successfully")
     return all_data
 
 
@@ -55,9 +58,9 @@ def save_summaries(summaries, output_dir, suffix="e.json"):
         with open(file_path, "w", encoding="utf-8") as f:
             json.dump(summary, f, indent=2, ensure_ascii=False)
 
-        print(f"✅ Saved {file_name}")
+        logger.info(f"Saved {file_name}")
 
-    print(f"\nTotal {len(summaries)} summaries saved at {output_dir}.")
+    logger.info(f"Total {len(summaries)} summaries saved at {output_dir}")
 
 
 def create_metadata_file(config_module, filepath):
@@ -78,4 +81,4 @@ def create_metadata_file(config_module, filepath):
     with open(filepath, "w", encoding="utf-8") as f:
         json.dump(config_dict, f, indent=2, ensure_ascii=False)
 
-    print(f"✅ Metadata file created at {filepath}")
+    logger.info(f"Metadata file created at {filepath}")
