@@ -1,6 +1,10 @@
 # README
 
-A pipeline for generating **keywords**, **summaries** and **conversations**  for augmenting the UNS dataset.
+A pipeline for generating **keywords**, **summaries** and **conversations** for augmenting the UNS dataset.
+
+Supports two methods for generating conversations:
+- **Standard prompting**: Direct LLM calls with system prompts
+- **sdialog**: Agent-based framework for more natural multi-turn dialogues
 
 ---
 
@@ -26,6 +30,8 @@ A pipeline for generating **keywords**, **summaries** and **conversations**  for
      ```bash
      poetry install
      ```
+
+   * The sdialog library is included for agent-based dialogue generation (optional)
 
 ---
 
@@ -72,7 +78,11 @@ This ensures that file numbering continues automatically and no existing files a
 ---
 ### 3) Generate transcriptions (conversations)
 
-Turns each file’s summary text into a structured transcription and appends it back into the same file.
+There are two methods to generate transcriptions from summaries:
+
+#### Option A: Standard LLM Prompting (Recommended for batch processing)
+
+Turns each file's summary text into a structured transcription using direct LLM calls with system prompts.
 
 ```bash
 python generate_transcription.py
@@ -80,15 +90,52 @@ python generate_transcription.py
 
 **What it does**
 
-* Loads items via get_data(data_dir=OUTPUT_DIR, file_pattern=FILE_PATTERN).
-
-* Skips any file that already contains a "transcription" field (idempotent).
-
-* Extracts the summary text from item["data"]["summary"]["text"] (falls back to "" if missing).
-
-* Calls the LLM that creates transcripts based on the summary
-
+* Loads items via `get_data(data_dir=OUTPUT_DIR, file_pattern=FILE_PATTERN)`
+* Skips any file that already contains a "transcription" field (idempotent)
+* Extracts the summary text from `item["data"]["summary"]["text"]`
+* Calls the LLM with a detailed system prompt to create transcripts
+* Supports multithreading for parallel processing (configurable via `MAX_WORKERS`)
 * Builds the final document and writes it back to the same file path
+
+**Configuration:** Edit `config.py` to customize:
+- `TRANSCRIPTION_GENERATOR_LLM_MODEL`: Model to use
+- `TRANSCRIPTION_GENERATOR_TEMPERATURE`: Sampling temperature
+- `TRANSCRIPTION_GENERATOR_SYSTEM_PROMPT`: Detailed instructions for the LLM
+
+---
+
+#### Option B: sdialog Agent Framework (Recommended for natural dialogues)
+
+Uses the [sdialog](https://github.com/idiap/sdialog) library to generate conversations through agent-based simulation with personas.
+
+```bash
+python sdialog_generate_transcription.py
+```
+
+**What it does**
+
+* Creates two agents with distinct personas:
+  - **Nurse Agent**: Triage nurse with calm, professional personality
+  - **Caller Agent**: Worried parent calling about their sick baby
+* Uses `LengthOrchestrator` to control conversation length (min/max turns)
+* Generates natural multi-turn dialogues where agents interact dynamically
+* Each agent has specific rules and behaviors defined in `config_sdialog.py`
+* Outputs more natural and varied conversations compared to single-shot prompting
+
+**Configuration:** Edit `config_sdialog.py` to customize:
+- `MAX_TURNS`: Maximum conversation turns
+- `LENGTH_ORCHESTRATOR_MIN/MAX`: Conversation length bounds
+- `nurse` and `caller` Persona objects with personality, rules, and language
+- `context`: Dialogue context including topics and behavioral notes
+
+**Key differences from Option A:**
+- ✅ More natural turn-taking and dialogue flow
+- ✅ Agents respond dynamically to each other
+- ✅ Better handling of follow-up questions
+- ❌ Slower (sequential processing, no multithreading)
+- ❌ Requires sdialog library dependency
+
+---
 
 ### 4) One-shot pipeline via Docker helper script
 
