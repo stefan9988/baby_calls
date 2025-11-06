@@ -1,4 +1,4 @@
-OUTPUT_DIR = "UNS dataset/json_english_gpt_5_mini"
+OUTPUT_DIR = "UNS dataset/json_english_gpt_5_mini_langchain"
 KEYWORDS_PATH = OUTPUT_DIR + "/keywords.json"
 METADATA_PATH = OUTPUT_DIR + "/metadata.json"
 
