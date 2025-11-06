@@ -18,9 +18,10 @@ DATASET_PATH="$(pwd)/UNS dataset"
 echo -e "${BLUE}=== Baby Calls Docker Runner ===${NC}\n"
 echo "Select which pipeline to run:"
 echo "  1) Standard pipeline (keywords → summary → transcription)"
-echo "  2) SDialog transcription"
+echo "  2) LangChain pipeline (keywords → summary → transcription) - Recommended"
+echo "  3) SDialog transcription"
 echo ""
-read -p "Enter your choice (1 or 2): " choice
+read -p "Enter your choice (1, 2, or 3): " choice
 
 echo -e "\n${YELLOW}Starting Docker build and run process...${NC}\n"
 
@@ -76,6 +77,46 @@ case $choice in
         ;;
 
     2)
+        echo -e "${BLUE}Running LangChain Pipeline${NC}\n"
+
+        # Step 2: Run generate_keywords_langchain.py
+        echo -e "${YELLOW}Step 2: Running generate_keywords_langchain.py...${NC}"
+        if sudo docker run --rm --network host \
+            --env-file .env \
+            -v "${DATASET_PATH}":/app/src/UNS\ dataset \
+            ${IMAGE_NAME} generate_keywords_langchain.py; then
+            echo -e "${GREEN}✓ generate_keywords_langchain.py completed${NC}\n"
+        else
+            echo -e "${RED}✗ generate_keywords_langchain.py failed${NC}"
+            exit 1
+        fi
+
+        # Step 3: Run generate_summary_langchain.py
+        echo -e "${YELLOW}Step 3: Running generate_summary_langchain.py...${NC}"
+        if sudo docker run --rm --network host \
+            --env-file .env \
+            -v "${DATASET_PATH}":/app/src/UNS\ dataset \
+            ${IMAGE_NAME} generate_summary_langchain.py; then
+            echo -e "${GREEN}✓ generate_summary_langchain.py completed${NC}\n"
+        else
+            echo -e "${RED}✗ generate_summary_langchain.py failed${NC}"
+            exit 1
+        fi
+
+        # Step 4: Run generate_transcription_langchain.py
+        echo -e "${YELLOW}Step 4: Running generate_transcription_langchain.py...${NC}"
+        if sudo docker run --rm --network host \
+            --env-file .env \
+            -v "${DATASET_PATH}":/app/src/UNS\ dataset \
+            ${IMAGE_NAME} generate_transcription_langchain.py; then
+            echo -e "${GREEN}✓ generate_transcription_langchain.py completed${NC}\n"
+        else
+            echo -e "${RED}✗ generate_transcription_langchain.py failed${NC}"
+            exit 1
+        fi
+        ;;
+
+    3)
         echo -e "${BLUE}Running SDialog Pipeline${NC}\n"
 
         # Run sdialog_generate_transcription.py
@@ -92,7 +133,7 @@ case $choice in
         ;;
 
     *)
-        echo -e "${RED}✗ Invalid choice. Please select 1 or 2.${NC}"
+        echo -e "${RED}✗ Invalid choice. Please select 1, 2, or 3.${NC}"
         exit 1
         ;;
 esac

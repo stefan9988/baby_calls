@@ -2,8 +2,9 @@
 
 A pipeline for generating **keywords**, **summaries** and **conversations** for augmenting the UNS dataset.
 
-Supports two methods for generating conversations:
-- **Standard prompting**: Direct LLM calls with system prompts
+Supports multiple implementation approaches:
+- **Standard prompting**: Direct OpenAI API calls with system prompts
+- **LangChain**: Framework-based implementation with better batch processing and structured outputs
 - **sdialog**: Agent-based framework for more natural multi-turn dialogues
 
 ---
@@ -32,6 +33,33 @@ Supports two methods for generating conversations:
      ```
 
    * The sdialog library is included for agent-based dialogue generation (optional)
+   * LangChain library is included for improved batch processing and structured outputs
+
+---
+
+## Implementation Approaches
+
+The project provides three different implementations for generating data:
+
+### Standard Implementation
+Direct OpenAI API calls. Simple and straightforward.
+- Scripts: `generate_keywords.py`, `generate_summary.py`, `generate_transcription.py`
+- Best for: Basic use cases, learning the pipeline
+
+### LangChain Implementation (Recommended)
+Uses the LangChain framework for better structure and reliability.
+- Scripts: `generate_keywords_langchain.py`, `generate_summary_langchain.py`, `generate_transcription_langchain.py`
+- Benefits:
+  - Improved batch processing with `model.batch()`
+  - Built-in structured output handling with `with_structured_output()`
+  - Better error handling and retry logic
+  - Cleaner code organization
+- Best for: Production use, processing large datasets
+
+### sdialog Implementation
+Agent-based dialogue generation for natural conversations.
+- Script: `sdialog_generate_transcription.py`
+- Best for: Most natural and varied conversations
 
 ---
 
@@ -41,8 +69,14 @@ Supports two methods for generating conversations:
 
 Run the keywords script first. It will create keyword entries based on your provided examples and save them to the folder you specify.
 
+**Standard version:**
 ```bash
-python generate_keywords.py 
+python src/generate_keywords.py
+```
+
+**LangChain version (recommended):**
+```bash
+python src/generate_keywords_langchain.py
 ```
 
 **What it does**
@@ -57,8 +91,14 @@ python generate_keywords.py
 
 After your augmented keywords are ready (stored in UNS dataset/json_english_aug/keywords.json), run:
 
+**Standard version:**
 ```bash
-python generate_summary.py
+python src/generate_summary.py
+```
+
+**LangChain version (recommended):**
+```bash
+python src/generate_summary_langchain.py
 ```
 
 **What it does**
@@ -78,14 +118,37 @@ This ensures that file numbering continues automatically and no existing files a
 ---
 ### 3) Generate transcriptions (conversations)
 
-There are two methods to generate transcriptions from summaries:
+There are three methods to generate transcriptions from summaries:
 
-#### Option A: Standard LLM Prompting (Recommended for batch processing)
+#### Option A: LangChain Implementation (Recommended)
+
+Uses LangChain's batch processing for efficient, structured transcription generation.
+
+```bash
+python src/generate_transcription_langchain.py
+```
+
+**What it does**
+* Loads items via `get_data(data_dir=OUTPUT_DIR, file_pattern=FILE_PATTERN)`
+* Skips any file that already contains a "transcription" field (idempotent)
+* Uses LangChain's `model.batch()` for efficient parallel processing
+* Automatic structured output parsing with `with_structured_output(method="json_mode")`
+* Better error handling and retry logic compared to standard implementation
+
+**Benefits over standard:**
+- Faster batch processing with configurable concurrency
+- Built-in JSON validation and structured output
+- Automatic retry on failures
+- Cleaner code with LangChain abstractions
+
+---
+
+#### Option B: Standard LLM Prompting
 
 Turns each file's summary text into a structured transcription using direct LLM calls with system prompts.
 
 ```bash
-python generate_transcription.py
+python src/generate_transcription.py
 ```
 
 **What it does**
@@ -104,12 +167,12 @@ python generate_transcription.py
 
 ---
 
-#### Option B: sdialog Agent Framework (Recommended for natural dialogues)
+#### Option C: sdialog Agent Framework (For most natural dialogues)
 
 Uses the [sdialog](https://github.com/idiap/sdialog) library to generate conversations through agent-based simulation with personas.
 
 ```bash
-python sdialog_generate_transcription.py
+python src/sdialog_generate_transcription.py
 ```
 
 **What it does**
@@ -128,12 +191,17 @@ python sdialog_generate_transcription.py
 - `nurse` and `caller` Persona objects with personality, rules, and language
 - `context`: Dialogue context including topics and behavioral notes
 
-**Key differences from Option A:**
-- ✅ More natural turn-taking and dialogue flow
-- ✅ Agents respond dynamically to each other
-- ✅ Better handling of follow-up questions
-- ❌ Slower (sequential processing, no multithreading)
-- ❌ Requires sdialog library dependency
+**Comparison of all three options:**
+
+| Feature | LangChain (A) | Standard (B) | sdialog (C) |
+|---------|---------------|--------------|-------------|
+| Speed | ⚡⚡⚡ Fastest (batch) | ⚡⚡ Fast (multi-thread) | ⚡ Slower (sequential) |
+| Natural dialogues | ✅ Good | ✅ Good | ✅✅ Most natural |
+| Batch processing | ✅✅ Excellent | ✅ Good | ❌ No |
+| Error handling | ✅✅ Built-in retries | ✅ Basic | ✅ Basic |
+| Code complexity | 🔧 Low (LangChain abstractions) | 🔧 Medium | 🔧🔧 Higher (agents) |
+| Dependencies | LangChain + OpenAI | OpenAI only | sdialog + OpenAI |
+| **Recommended for** | Production, large datasets | Learning, simple use cases | Maximum dialogue quality |
 
 ---
 
@@ -148,22 +216,29 @@ chmod +x run_docker.sh
 
 **What it does**
 
+The script provides three pipeline options:
+1. **Standard pipeline**: Uses standard implementation scripts
+2. **LangChain pipeline** (recommended): Uses LangChain implementation scripts
+3. **SDialog pipeline**: Uses sdialog for transcription generation only
+
+**Features:**
 * Builds the Docker image named baby-calls
-
-* Runs generate_keywords.py in the container
-
+* Runs the selected pipeline scripts in sequence
 * Mounts your local dataset folder into the container:
+  - Host: `$(pwd)/UNS dataset`
+  - Container: `/app/src/UNS dataset`
+* Loads environment variables from `.env`
+* Uses host networking (`--network host`)
+* If any step fails, the script stops and shows a red ✗ message; otherwise you'll see a final green "All tasks completed successfully!" ✓
 
-   Host: $(pwd)/UNS dataset
+**Example:**
+```
+=== Baby Calls Docker Runner ===
 
-   Container: /app/src/UNS dataset
+Select which pipeline to run:
+  1) Standard pipeline (keywords → summary → transcription)
+  2) LangChain pipeline (keywords → summary → transcription) - Recommended
+  3) SDialog transcription
 
-   Loads environment variables from .env
-
-   Uses host networking (--network host)
-
-* Runs generate_summary.py (same mount, env, and network settings)
-
-* Runs generate_transcription.py (same mount, env, and network settings)
-
-* If any step fails, the script stops and shows a red ✗ message; otherwise you’ll see a final green “All tasks completed successfully!” ✓
+Enter your choice (1, 2, or 3): 2
+```
