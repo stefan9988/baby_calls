@@ -1,5 +1,4 @@
 from dataset_operations import get_data, create_metadata_file
-from llms.llm_factory import get_llm_client
 from utils import convert_response_to_json
 from logger import setup_logger
 import config
@@ -9,6 +8,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 import random
 import json
 import os
+from dotenv import load_dotenv
 
 logger = setup_logger(__name__)
 
@@ -18,17 +18,14 @@ FILE_PATTERN = "*e.json"
 NUMBER_OF_SAMPLES = 5
 RANDOM_SEED = 42
 
+load_dotenv()
 # random.seed(RANDOM_SEED)
 
-client = get_llm_client(
-    client_type=config.CLIENT_TYPE,
-    model=config.KEYWORD_GENERATOR_LLM_MODEL,
-    timeout=600,
-)
 model = ChatOpenAI(
     model_name=config.KEYWORD_GENERATOR_LLM_MODEL,
     temperature=config.KEYWORD_GENERATOR_TEMPERATURE,
     max_tokens=config.KEYWORD_GENERATOR_MAX_TOKENS,
+    api_key=os.getenv("OPENAI_API_KEY")
 )
 
 
